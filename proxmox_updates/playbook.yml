@@ -1,0 +1,12 @@
+---
+- name: Proxmox Updates
+  hosts: proxmox
+  become: yes
+
+  tasks:
+    - name: Update Proxmox packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+        autoremove: yes
+        autoclean: yes
