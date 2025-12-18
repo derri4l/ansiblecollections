@@ -1,3 +1,5 @@
+# this playbook installs docker and portainer on a ubuntu server
+
 --- 
 - name: Install docker
   hosts: docker
@@ -22,7 +24,6 @@
         - curl
         - nano
         - python3-pip
-        - net-utils
 
 # Start and configure the firewall        
     - name: Start UFW
@@ -37,14 +38,17 @@
         - 22
         - 433
         - 80
-        - 9443
-        - 9000
+        - 9443 #port for portainer
+        - 9000 #portainer
 
     - name: Configure UFW
       command: ufw default deny incoming
     
     - name: Allow UFW Outgoing
-      command: ufw --force enabled
+      command: ufw default allow outgoing
+    
+    - name: Enable UFW
+      command: ufw --force enable
     
 # Install and start docker.io
     - name: Install Docker
@@ -58,7 +62,29 @@
         state: started
         enabled: yes
 
-  
+# add a user to the docker group
+    - name: add user
+      user: 
+        name: "{{ user }}" # added user variable in inventory file
+        groups: docker
+        append: yes
+
+# install and configure portainer with docker
+    - name: create portainer volume
+      community.docker.docker_volume:
+        name: portainer-data
+
+    - name: run portainer
+      community.docker.docker_container:
+        name: portainer
+        image: portainer/portainer-ce:latest
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "9000:9000"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+          - portainer-data:/data
     
 
 
