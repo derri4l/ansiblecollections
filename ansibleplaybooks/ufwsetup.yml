@@ -1,0 +1,51 @@
+# This playbook configures enables and configures UFW Firewall
+- name: Configure UFW
+  hosts: servers
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Update server
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: dist
+        autoremove: true
+        autoclean: true
+
+# Install UFW
+    - name: Install UFW
+      ansible.builtin.apt:
+        name: ufw
+        state: present
+
+# Allow required ports
+    - name: Allow required ports
+      community.general.ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - 22
+        - 443
+        - 8443
+
+# Allow trusted networks
+    - name: Allow trusted networks
+      community.general.ufw:
+        rule: allow
+        src: "{{ item }}"
+      loop: "{{ ufw_whitelist | default([]) }}"
+
+    - name: Default deny incoming
+      community.general.ufw:
+        direction: incoming
+        policy: deny
+
+    - name: Default allow outgoing
+      community.general.ufw:
+        direction: outgoing
+        policy: allow
+
+    - name: Enable UFW
+      community.general.ufw:
+        state: enabled
