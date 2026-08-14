@@ -14,42 +14,6 @@
         autoremove: yes
         autoclean: yes
     
-# Install necessary packages
-    - name: Install packages
-      package:
-        name: "{{item}}"
-        state: present 
-      loop:
-        - ufw
-        - curl
-        - nano
-        - python3-pip
-
-# Start and configure the firewall        
-    - name: Start UFW
-      service: 
-        name: ufw
-        state: started
-        enabled: yes
-
-    - name: Allow UFW Ports
-      command: "ufw allow {{item}}"
-      loop:
-        - 22
-        - 433
-        - 80
-        - 9443 
-        - 9000 #portainer
-
-    - name: Configure UFW
-      command: ufw default deny incoming
-    
-    - name: Allow UFW Outgoing
-      command: ufw default allow outgoing
-    
-    - name: Enable UFW
-      command: ufw --force enable
-    
 # Install and start docker.io
     - name: Install Docker
       apt:
