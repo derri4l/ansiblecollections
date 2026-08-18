@@ -8,10 +8,12 @@
 # - Performs a fast-forward-only merge (no merge commits)
 # - Pushes updated main to origin, then returns to the dev branch.
 
-# Install: git config --global alias.shove "<path_to_repo>/git-shove.sh"
+# Install: git config --global alias.shove "!<path_to_repo>/git-shove.sh"
+# eg:	   git config --global alias.shove "!~/shellscripts/git-shove.sh"
 # Usage:     git shove
 
 #!/usr/bin/env bash
+
 
 GREEN="\033[1;32m"
 RED="\033[1;31m"
