@@ -34,7 +34,7 @@
       community.general.ufw:
         rule: allow
         src: "{{ item }}"
-      loop: "{{ ufw_whitelist | default([]) }}"
+      loop: "{{ ufw_whitelist }}"
 
     - name: Default deny incoming
       community.general.ufw:

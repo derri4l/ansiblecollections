@@ -1,0 +1,106 @@
+# This playbook installs and configures fail2ban
+# .
+- name: Install and configure fail2ban
+  hosts: web
+  become: true
+
+  vars:
+    fail2ban_admin_email: "admin@example.com"
+    fail2ban_ignore_ips:
+      - "127.0.0.1/8"
+      - "::1"
+
+  tasks:
+    - name: Install fail2ban
+      ansible.builtin.package:
+        name: fail2ban
+        state: present
+
+    - name: Configure fail2ban
+      ansible.builtin.copy:
+        dest: /etc/fail2ban/jail.local
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [DEFAULT]
+          ignoreip = {{ whitelist | join(' ') }}
+          banaction = %(banaction_allports)s
+          destemail = {{ f2b_mail }}
+          sender = fail2ban@{{ ansible_hostname }}
+          action = %(action_mw)s
+          backend = systemd
+
+          [sshd]
+          enabled = true
+          port = ssh
+          filter = sshd
+          bantime = 1h
+          findtime = 10m
+          maxretry = 3
+
+          [sshd-ddos]
+          enabled = true
+          port = ssh
+          filter = sshd[mode=ddos]
+          bantime = 1h
+          findtime = 10m
+          maxretry = 3
+
+          [nginx-http-auth]
+          enabled = {{ 'true' if 'web' in group_names else 'false' }}
+          port = http,https
+          filter = nginx-http-auth
+          logpath = /var/log/nginx/error.log
+          bantime = 1h
+          findtime = 10m
+          maxretry = 5
+
+          [nginx-limit-req]
+          enabled = {{ 'true' if 'web' in group_names else 'false' }}
+          port = http,https
+          filter = nginx-limit-req
+          logpath = /var/log/nginx/error.log
+          bantime = 1h
+          findtime = 10m
+          maxretry = 5
+
+          [nginx-botsearch]
+          enabled = {{ 'true' if 'web' in group_names else 'false' }}
+          port = http,https
+          filter = nginx-botsearch
+          logpath = /var/log/nginx/access.log
+          bantime = 1h
+          findtime = 10m
+          maxretry = 5
+      notify: Restart fail2ban
+
+    - name: Ensure fail2ban is enabled and running
+      ansible.builtin.service:
+        name: fail2ban
+        enabled: true
+        state: started
+
+    - name: Check fail2ban service state
+      ansible.builtin.command:
+        cmd: systemctl is-active fail2ban
+      register: fail2ban_service_status
+      changed_when: false
+
+    - name: Get fail2ban jail status
+      ansible.builtin.command:
+        cmd: fail2ban-client status
+      register: fail2ban_status
+      changed_when: false
+
+    - name: Show fail2ban status
+      ansible.builtin.debug:
+        msg:
+          - "Fail2Ban service: {{ fail2ban_service_status.stdout }}"
+          - "{{ fail2ban_status.stdout_lines }}"
+
+  handlers:
+    - name: Restart fail2ban
+      ansible.builtin.service:
+        name: fail2ban
+        state: restarted
