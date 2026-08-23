@@ -1,5 +1,5 @@
 # This playbook installs and configures fail2ban
-# .
+#
 - name: Install and configure fail2ban
   hosts: web
   become: true
@@ -51,15 +51,6 @@
           enabled = {{ 'true' if 'web' in group_names else 'false' }}
           port = http,https
           filter = nginx-http-auth
-          logpath = /var/log/nginx/error.log
-          bantime = 1h
-          findtime = 10m
-          maxretry = 5
-
-          [nginx-limit-req]
-          enabled = {{ 'true' if 'web' in group_names else 'false' }}
-          port = http,https
-          filter = nginx-limit-req
           logpath = /var/log/nginx/error.log
           bantime = 1h
           findtime = 10m
